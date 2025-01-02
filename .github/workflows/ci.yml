@@ -1,0 +1,30 @@
+name: CI Workflow
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    # Sprawdzanie repozytorium
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    # Ustawienie Docker (jeśli korzystasz z kontenerów)
+    - name: Set up Docker
+      run: |
+        docker --version
+        docker build -t flask-web-app .
+
+    # Uruchomienie prostych testów
+    - name: Run basic test
+      run: echo "Test"
+      
+    # Opcjonalnie: Uruchomienie aplikacji w kontenerze Docker
+    - name: Run flask app in Docker container
+      run: |
+        docker run -d -p 8000:8000 flask-web-app
