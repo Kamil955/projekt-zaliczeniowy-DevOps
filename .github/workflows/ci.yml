@@ -22,15 +22,13 @@ jobs:
         sudo dpkg -i trivy.deb
         sudo apt-get install -f # naprawa brakujących zależności
 
-    - name: Scan container image with Trivy
+    - name: Build container image
       run: |
         docker build -t my-app .  # Zbuduj obraz kontenera
-        trivy image my-app        # Skanowanie obrazu kontenera
 
-    - name: Save Trivy report
+    - name: Scan container image with Trivy and save report
       run: |
-        docker build -t my-app .
-        trivy image my-app --format json --output trivy-report.json
+        trivy image my-app --format json --output trivy-report.json  # Skanowanie obrazu i zapis raportu
         cat trivy-report.json  # Wyświetl raport
 
     - name: Upload Trivy Report as artifact
@@ -38,5 +36,3 @@ jobs:
       with:
         name: trivy-report
         path: trivy-report.json
-
-    
