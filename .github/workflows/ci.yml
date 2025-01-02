@@ -34,7 +34,7 @@ jobs:
         cat trivy-report.json  # Wyświetl raport
 
     - name: Upload Trivy Report as artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: trivy-report
         path: trivy-report.json
