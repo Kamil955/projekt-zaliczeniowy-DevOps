@@ -8,8 +8,35 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
+
     - name: Run basic test
       run: echo "Test"
+
+    - name: Install Trivy
+      run: |
+        curl -sSfL https://github.com/aquasecurity/trivy/releases/download/v0.40.0/trivy_0.40.0_Linux-64bit.deb -o trivy.deb
+        sudo dpkg -i trivy.deb
+        sudo apt-get install -f # naprawa brakujących zależności
+
+    - name: Scan container image with Trivy
+      run: |
+        docker build -t my-app .  # Zbuduj obraz kontenera
+        trivy image my-app        # Skanowanie obrazu kontenera
+
+    - name: Save Trivy report
+      run: |
+        docker build -t my-app .
+        trivy image my-app --format json --output trivy-report.json
+        cat trivy-report.json  # Wyświetl raport
+
+    - name: Upload Trivy Report as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: trivy-report
+        path: trivy-report.json
+
+    
