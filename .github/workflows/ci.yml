@@ -1,38 +1,47 @@
-name: CI Workflow
+name: Trivy Security Scan
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
 
 jobs:
-  build:
+  trivy-scan:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      # Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Run basic test
-      run: echo "Test"
+      # Install Trivy
+      - name: Install Trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh
+          chmod +x trivy
 
-    - name: Install Trivy
-      run: |
-        curl -sSfL https://github.com/aquasecurity/trivy/releases/download/v0.40.0/trivy_0.40.0_Linux-64bit.deb -o trivy.deb
-        sudo dpkg -i trivy.deb
-        sudo apt-get install -f # naprawa brakujących zależności
+      # Run Trivy scan for the Docker image
+      - name: Scan Docker image
+        run: |
+          docker build -t my-app-image .
+          ./trivy image --exit-code 1 --severity HIGH,CRITICAL my-app-image
 
-    - name: Build container image
-      run: |
-        docker build -t my-app .  # Zbuduj obraz kontenera
+      # Run Trivy scan for repository files
+      - name: Scan repository for vulnerabilities
+        run: |
+          ./trivy fs --exit-code 1 --severity HIGH,CRITICAL .
 
-    - name: Scan container image with Trivy and save report
-      run: |
-        trivy image my-app --format json --output trivy-report.json  # Skanowanie obrazu i zapis raportu
-        cat trivy-report.json  # Wyświetl raport
+      # Save the Trivy report
+      - name: Save Trivy report
+        run: |
+          ./trivy image --format table my-app-image > trivy-report.txt
+          ./trivy fs --format table . >> trivy-report.txt
 
-    - name: Upload Trivy Report as artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: trivy-report
-        path: trivy-report.json
+      # Upload Trivy report as an artifact
+      - name: Upload Trivy report
+        uses: actions/upload-artifact@v3
+        with:
+          name: trivy-report
+          path: trivy-report.txt
